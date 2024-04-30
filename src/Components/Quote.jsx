@@ -1,5 +1,5 @@
 import axios from 'axios';
-import React, { useEffect } from 'react'
+import React from 'react';
 import { BiSolidLike } from "react-icons/bi";
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
@@ -14,17 +14,8 @@ const Quote = ({ res, name, fetchData }) => {
         e.preventDefault();
         try {
             if (Object.keys(storeData).length === 0) return navigate("/login");
-            const response = await axios.post("http://localhost:8080/like", {
-                countLike: true,
-                quote: { id: id },
-                user: {
-                    id: storeData.id
-                }
-            });
+            await axios.post(`http://localhost:8080/like/likes/${storeData.id}/${id}`);
             fetchData();
-
-
-            // console.log("resp>>>>", response);
         }
         catch (error) {
             console.log(error)
