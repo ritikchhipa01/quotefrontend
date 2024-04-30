@@ -1,80 +1,132 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState } from "react";
 import { IoSearchOutline } from "react-icons/io5";
-import Quote from './Quote';
-import axios from 'axios';
-import Dialog from './Dialog';
+import { useSelector } from "react-redux";
+import Quote from "./Quote";
+import axios from "axios";
+import Dialog from "./Dialog";
+import { useDispatch } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { addUser } from "../slice";
 
 const QuoteMain = () => {
-    const [data, setData] = useState([]);
-    const [search, setSearch] = useState("");
-    const [show, setShow] = useState(false);
-    const [quote, setQuote] = useState("");
-    const fetchData = async () => {
-        const data = await fetch('http://localhost:8080/user');
-        const res = await data.json();
-        // console.log(res[0].userName);
-        setData(res);
+  const [data, setData] = useState([]);
+  const [search, setSearch] = useState("");
+  const [show, setShow] = useState(false);
+  const [quote, setQuote] = useState("");
+  const [logout, setLogOut] = useState({});
+
+  const storeData = useSelector((store) => store.user);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
+  const fetchData = async () => {
+    const data = await fetch("http://localhost:8080/user");
+    const res = await data.json();
+    setData(res);
+  };
+
+  const quotePost = async (e) => {
+    e.preventDefault();
+    if (!quote) return alert("Please enter a quote!");
+    try {
+      await axios.post(`http://localhost:8080/quote`, {
+        content: quote,
+        user: { id: storeData.id },
+      });
+      setShow(false);
+      fetchData();
+    } catch (error) {
+      console.log(error);
     }
+  };
 
-    useEffect(() => {
-        fetchData();
-    }, [])
+  const handleAddQuote = () =>
+    Object.keys(storeData).length === 0 ? navigate("/login") : setShow(true);
+  const LogOutHandler = () => {
+    localStorage.removeItem("userInfo");
+    setLogOut({});
+    dispatch(addUser({}));
+  };
 
-    const quotePost = async (e) => {
-        e.preventDefault();
-        if (!quote) return alert("Please enter a quote!");
-        try {
-            const data = await axios.post(`http://localhost:8080/quote`, { content: quote, user: { id: "3103" } });
-            console.log('data====> ', data)
-        } catch (error) {
-            console.log(error)
-        }
-    }
+  useEffect(() => {
+    fetchData();
+    setLogOut(storeData);
+  }, []);
 
-    // console.log(quote);
-    return (
-        <>
-            <div className='  w-1/2 mx-auto  '>
-                <div className=' flex items-center justify-between px-3 py-2 my-4 w-full border border-gray-700 rounded-md '>
-                    <input type="text"
-                        placeholder='Search'
-                        className='mx-2 outline-none '
-                        onChange={(e) => setSearch(e.target.value)}
-                    />
-                    <IoSearchOutline size={20} color='#000' />
-                </div>
-                <div className=''>
-                    {data && !search &&
-                        data.map((res) => {
-                            return (
-                                <Quote key={res.id} res={res} name={res.userName} />
-                            )
-                        })
-                    }
-                    {data && search &&
-                        data.filter((res) => res.userName.toLowerCase().includes(search.toLowerCase())).map((res) => {
-                            return (
-                                <Quote key={res.id} res={res} name={res.userName} />
-                            )
-                        })
-                    }
-                </div>
-            </div>
+  useEffect(() => {}, [logout]);
 
-            {/* dialog of add quote */}
+  return (
+    <>
+      <div className=" mx-3 my-20 sm:my-0 sm:w-1/2 sm:mx-auto  ">
+        <div className=" flex items-center justify-between px-3 py-2 my-4 w-full border border-gray-700 rounded-md ">
+          <input
+            type="text"
+            placeholder="Search"
+            className=" flex-1 mx-2 outline-none "
+            onChange={(e) => setSearch(e.target.value)}
+          />
+          <IoSearchOutline size={20} color="#000" />
+        </div>
+        <div className="">
+          {data &&
+            !search &&
+            data.map((res) => {
+              return (
+                <Quote
+                  key={res.id}
+                  res={res}
+                  name={res.userName}
+                  fetchData={fetchData}
+                />
+              );
+            })}
+          {data &&
+            search &&
+            data
+              .filter((res) =>
+                res.userName.toLowerCase().includes(search.toLowerCase())
+              )
+              .map((res) => {
+                return (
+                  <Quote
+                    key={res.id}
+                    res={res}
+                    name={res.userName}
+                    fetchData={fetchData}
+                  />
+                );
+              })}
+        </div>
+      </div>
 
-            <button
-                className="absolute top-5 right-5 text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-                type="button"
-                onClick={() => setShow(true)}
-            >
-                Add Quote
-            </button>
+      {/* dialog of add quote */}
+      <button
+        className="absolute top-5 right-5 text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+        type="button"
+        onClick={() => handleAddQuote()}
+      >
+        Add Quote
+      </button>
+      <button
+        className="absolute top-5 left-5 text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+        type="button"
+        onClick={() => {
+          Object.keys(storeData).length === 0
+            ? navigate("/login")
+            : LogOutHandler();
+        }}
+      >
+        {Object.keys(logout).length === 0 ? "Log In" : "Log Out"}
+      </button>
 
-            <Dialog  show={show} setShow={setShow} setQuote={setQuote} quotePost={quotePost}/>
-            
-        </>
-    )
-}
+      <Dialog
+        show={show}
+        setShow={setShow}
+        setQuote={setQuote}
+        quotePost={quotePost}
+      />
+    </>
+  );
+};
 
-export default QuoteMain
+export default QuoteMain;

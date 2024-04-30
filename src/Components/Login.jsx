@@ -1,32 +1,39 @@
 import React, { useState } from 'react'
+import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { addUser } from '../slice';
 
 const Login = () => {
-    const [isLogin, setIsLogin] = useState(false);
+    const [isLogin, setIsLogin] = useState(true);
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
 
     const navigate = useNavigate();
-
-
+    const dispatch = useDispatch();
+    
     const postUser = async (e) => {
         e.preventDefault();
         try {
-            if (!name || !email || !password) return alert('All Field Required');
-            const data = await axios.post(`http://localhost:8080/user`, { userName: name, email, password })
-            // console.log('data====> ', data)
-            navigate('/');
+            if (!isLogin) {
+                if (!name || !email || !password) return alert('All Field Required');
+                const data = await axios.post(`http://localhost:8080/user`, { userName: name, email, password })
+                dispatch(addUser(data.data))
+                navigate('/');
+            }
+            if (isLogin) {
+
+                if (!password || !email) return alert("All Field Required", name, email);
+                const data = await axios.post(`http://localhost:8080/user/login`, { email, password });
+                dispatch(addUser(data.data));
+                navigate('/');
+            }
         }
         catch (error) {
             console.log(error);
         }
     }
-
-    // console.log(name);
-    // console.log(email);
-    // console.log(password);
 
     return (
         <>
